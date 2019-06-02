@@ -11,10 +11,8 @@ import WooferDynamics
 
 from JointSpaceController 	import JointSpaceController, TrotPDController
 from BasicController 		import PropController
-from QPBalanceController 	import QPBalanceController
 from StateEstimator 		import MuJoCoStateEstimator
 from ContactEstimator 		import MuJoCoContactEstimator
-from GaitPlanner 			import StandingPlanner, StepPlanner
 from SwingLegController		import PDSwingLegController, ZeroSwingLegController
 from TrotGait 				import TrotGait
 from MPCPlanner				import MPCStandingPlanner
@@ -28,14 +26,13 @@ class WooferRobot():
 	The primary input is the mujoco simulation data and the
 	primary output is a set joint torques.
 	"""
-	def __init__(self, state_estimator, contact_estimator, qp_controller, gait_planner, swing_controller, dt):
+	def __init__(self, state_estimator, contact_estimator, gait_planner, swing_controller, dt):
 		"""
 		Initialize object variables
 		"""
 
 		self.contact_estimator 	= contact_estimator
 		self.state_estimator 	= state_estimator
-		self.qp_controller 		= qp_controller # QP controller for calculating foot forces
 		self.gait_planner		= gait_planner
 		self.swing_controller 	= swing_controller
 		self.state 				= None
@@ -176,11 +173,10 @@ def MakeWoofer(dt = 0.001):
 	"""
 	mujoco_state_est 	= MuJoCoStateEstimator()
 	mujoco_contact_est 	= MuJoCoContactEstimator()
-	qp_controller	 	= QPBalanceController()
 	gait 				= TrotGait(0.5, 0.1)
 	gait_planner 		= MPCStandingPlanner(20, .05, gait, np.array([0, 0, (WOOFER_CONFIG.LEG_L + WOOFER_CONFIG.FOOT_RADIUS), 0, 0, 0, 0, 0, 0, 0, 0, 0]))
 	swing_controller	= PDSwingLegController()
 
-	woofer = WooferRobot(mujoco_state_est, mujoco_contact_est, qp_controller, gait_planner, swing_controller, dt = dt)
+	woofer = WooferRobot(mujoco_state_est, mujoco_contact_est, gait_planner, swing_controller, dt = dt)
 
 	return woofer
