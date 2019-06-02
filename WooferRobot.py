@@ -58,11 +58,20 @@ class WooferRobot():
 		self.t = 0
 		self.i = 0
 
+		self.phase = 1
+
 		self.foot_forces = np.array([0,0,WOOFER_CONFIG.MASS*9.81/4]*4)
 
 		self.torques = np.zeros(12)
 
-		self.step_locations = np.zeros(12)
+		self.step_locations = np.array([WOOFER_CONFIG.LEG_FB, -WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS,
+								 WOOFER_CONFIG.LEG_FB,  WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS,
+								-WOOFER_CONFIG.LEG_FB, -WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS,
+								-WOOFER_CONFIG.LEG_FB,  WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS])
+		self.p_step_locations = np.array([WOOFER_CONFIG.LEG_FB, -WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS,
+								 WOOFER_CONFIG.LEG_FB,  WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS,
+								-WOOFER_CONFIG.LEG_FB, -WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS,
+								-WOOFER_CONFIG.LEG_FB,  WOOFER_CONFIG.LEG_LR, WOOFER_CONFIG.FOOT_RADIUS])
 
 		self.swing_torques = np.zeros(12)
 		self.swing_trajectory = np.zeros(12)
@@ -85,18 +94,22 @@ class WooferRobot():
 		self.state 		= self.state_estimator.update(sim)
 		self.contacts 	= self.contact_estimator.update(sim)
 
+		self.phase = self.gait.getPhase(self.t)
+
+		(self.step_locations, self.p_step_locations) = self.gait.updateStepLocations(self.state,
+																self.step_locations,
+																self.p_step_locations,
+																self.phase)
+
 		# ################################### Swing leg control ###################################
-		# # TODO. Zero for now, but in the future the swing controller will provide these torques
-		# self.swing_torques, \
-		# self.swing_forces,\
-		# self.swing_trajectory, \
-		# self.foot_positions = self.swing_controller.update(	self.state,
-		# 													self.step_phase,
-		# 													self.step_locations,
-		# 													self.p_step_locations,
-		# 													self.active_feet,
-		# 													WOOFER_CONFIG,
-		# 													SWING_CONTROLLER_CONFIG)
+		self.swing_torques, \
+		self.swing_forces,\
+		self.swing_trajectory, \
+		self.foot_positions = self.swing_controller.update(	self.state,
+															self.step_phase,
+															self.step_locations,
+															self.p_step_locations,
+															self.active_feet)
 
 		state = np.zeros(12)
 		state[0:3] = self.state['p']

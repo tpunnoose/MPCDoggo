@@ -1,6 +1,7 @@
 import numpy as np
 import WooferDynamics
 from math import pi, sin
+from WooferConfig import WOOFER_CONFIG, SWING_CONTROLLER_CONFIG
 
 class SwingLegController:
 	def update(self, state, contacts, step_phase):
@@ -18,7 +19,8 @@ class PDSwingLegController(SwingLegController):
 	Computes joint torques to bring the swing legs to their new locations
 	"""
 
-	def trajectory(self, state, step_phase, step_locs, p_step_locs, active_feet, swing_config):
+
+	def trajectory(self, state, step_phase, step_locs, p_step_locs, active_feet):
 		"""
 		sin2-based parametric trajectory planner
 
@@ -33,7 +35,7 @@ class PDSwingLegController(SwingLegController):
 
 		# foot heights
 		foot_heights = np.zeros(12)
-		foot_heights[[2,5,8,11]] = swing_config.STEP_HEIGHT * (sin(step_phase * pi))**2
+		foot_heights[[2,5,8,11]] = SWING_CONTROLLER_CONFIG.STEP_HEIGHT * (sin(step_phase * pi))**2
 
 		# combine ground plane interp and foot heights
 		swing_foot_reference_p = WooferDynamics.FootSelector(1-active_feet)*(ground_plane_foot_reference + foot_heights)
@@ -44,13 +46,13 @@ class PDSwingLegController(SwingLegController):
 
 		return swing_foot_reference_p
 
-	def update(self, state, step_phase, step_locs, p_step_locs, active_feet, woof_config, swing_config):
-		reference_positions = self.trajectory(state, step_phase, step_locs, p_step_locs, active_feet, swing_config)
+	def update(self, state, step_phase, step_locs, p_step_locs, active_feet):
+		reference_positions = self.trajectory(state, step_phase, step_locs, p_step_locs, active_feet)
 
 		actual_positions = WooferDynamics.FootLocationsWorld(state)
 
 		errors = reference_positions - actual_positions
-		foot_forces = WooferDynamics.CoordinateExpander(swing_config.KP) * errors * WooferDynamics.FootSelector(1-active_feet)
+		foot_forces = WooferDynamics.CoordinateExpander(SWING_CONTROLLER_CONFIG.KP) * errors * WooferDynamics.FootSelector(1-active_feet)
 
 		leg_torques = np.zeros(12)
 		for i in range(4):
@@ -62,7 +64,3 @@ class PDSwingLegController(SwingLegController):
 		# print(leg_torques, reference_positions)
 		# print(" ")
 		return leg_torques, foot_forces, reference_positions, actual_positions
-
-
-
-
