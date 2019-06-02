@@ -109,7 +109,7 @@ class TrajectoryGeneration:
 		curr_t = t
 
 		for i in range(self.N):
-			active_feet = self.gait.feetInContact(curr_t)
+			active_feet = self.gait.feetInContact(self.gait.getPhase(curr_t))
 			active_feet_12 = active_feet[[0,0,0,1,1,1,2,2,2,3,3,3]]
 
 			foot_loc_i = active_feet_12 * foot_locs
@@ -155,7 +155,7 @@ class TrajectoryGeneration:
 			fy_mat[2*i + 1, 3*i + 2] = -self.mu
 
 		for i in range(self.N):
-			foot_loc_i = self.gait.feetInContact(curr_t)
+			foot_loc_i = self.gait.feetInContact(self.gait.getPhase(curr_t))
 			# Z Force constraints, accounting for which feet are grounded
 			c_up[i, :4] = foot_loc_i * self.max_vert_force
 			C[i, :4] = fz_mat

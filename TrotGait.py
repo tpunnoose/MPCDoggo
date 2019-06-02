@@ -30,8 +30,6 @@ class TrotGait:
 			return 4
 
 	def feetInContact(self, phase):
-		phase = self.getPhase(t)
-
 		if phase == 1:
 			return np.ones(4)
 		elif phase == 2:
