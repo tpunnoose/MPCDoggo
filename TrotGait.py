@@ -1,4 +1,5 @@
 import numpy as np
+from WooferConfig import WOOFER_CONFIG
 
 class TrotGait:
 	def __init__(self, step_time, overlap_time):
@@ -12,8 +13,8 @@ class TrotGait:
 		Length of Phase 1/3: step_time
 		Length of Phase 2/4: overlap_time
 		"""
-		self.step_time = overlap_time
-		self.overlap_time = step_time
+		self.step_time = step_time
+		self.overlap_time = overlap_time
 
 		self.phase_length = 2*step_time + 2*overlap_time
 
@@ -46,32 +47,38 @@ class TrotGait:
 
 		side: right leg = 1, left leg = 0
 		"""
-		p_diff = 0.5 * state['p_d'][0:2] * self.step_time
+		# p_diff = 0.5 * state['p_d'][0:2] * self.step_time
+
+		p_diff = np.array([0.1, 0.0])
 
 		new_step_locations = step_locations
 		new_p_step_locations = p_step_locations
 
 		if phase == 1:
 			# need to move the FL/BR feet
-			new_step_locations[3:5] = step_locations[3:5] + p_diff
-			new_step_locations[6:8] = step_locations[6:8] + p_diff
+			new_step_locations[3:5] = p_step_locations[3:5] + p_diff
+			new_step_locations[6:8] = p_step_locations[6:8] + p_diff
+			new_p_step_locations[0:2] = p_step_locations[0:2]
+			new_p_step_locations[9:11] = p_step_locations[9:11]
 
-		elif phase == 2:
-			# moving FL/BR feet
-			new_p_step_locations[3:5] = p_step_locations[3:5]
-			new_p_step_locations[6:8] = p_step_locations[6:8]
+		# elif phase == 2:
+		# 	# moving FL/BR feet
+		#
 
 		elif phase == 3:
 			# need to move the FR/BL feet
-			new_step_locations[0:2] = step_locations[0:2] + p_diff
-			new_step_locations[9:11] = step_locations[9:11] + p_diff
+			new_step_locations[0:2] = p_step_locations[0:2] + p_diff
+			new_step_locations[9:11] = p_step_locations[9:11] + p_diff
+			new_p_step_locations[3:5] = p_step_locations[3:5]
+			new_p_step_locations[6:8] = p_step_locations[6:8]
 
-		elif phase == 4:
-			# moving FR/BL feet
-			new_p_step_locations[0:2] = p_step_locations[0:2] + p_diff
-			new_p_step_locations[9:11] = p_step_locations[9:11] + p_diff
+		# elif phase == 4:
+		# 	# moving FR/BL feet
+		#
 
 		return (new_step_locations, new_p_step_locations)
+
+		# return (step_locations, p_step_locations)
 
 	def getStepPhase(self, t, phase):
 		"""
@@ -79,8 +86,9 @@ class TrotGait:
 		"""
 		phase_time = t % self.phase_length
 
+		time_into_traj = 0
 		if phase == 4:
-			time_into_traj = 2*self.step_time + 2*self.overlap_time - phase_time
-		else:
-			time_into_traj = self.step_time + self.overlap_time - phase_time
+			time_into_traj = phase_time - (self.step_time + 2*self.overlap_time)
+		elif phase == 2:
+			time_into_traj = phase_time - self.overlap_time
 		return time_into_traj/self.step_time

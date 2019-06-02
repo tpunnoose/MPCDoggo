@@ -61,6 +61,6 @@ class PDSwingLegController(SwingLegController):
 				specific_leg_joints = state['j'][3*i:3*i+3]
 				leg_torques[3*i:3*i+3] = WooferDynamics.FootForceToJointTorques(specific_foot_force, specific_leg_joints, state['q'], abaduction_offset = 0)
 
-		# print(leg_torques, reference_positions)
+		# print("Reference world positions: ", reference_positions)
 		# print(" ")
 		return leg_torques, foot_forces, reference_positions, actual_positions
