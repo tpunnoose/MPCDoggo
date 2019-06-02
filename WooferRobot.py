@@ -26,7 +26,7 @@ class WooferRobot():
 	The primary input is the mujoco simulation data and the
 	primary output is a set joint torques.
 	"""
-	def __init__(self, state_estimator, contact_estimator, gait_planner, swing_controller, dt):
+	def __init__(self, state_estimator, contact_estimator, gait, gait_planner, swing_controller, dt):
 		"""
 		Initialize object variables
 		"""
@@ -96,6 +96,8 @@ class WooferRobot():
 
 		self.phase = self.gait.getPhase(self.t)
 
+		self.active_feet = self.gait.feetInContact(self.phase)
+
 		(self.step_locations, self.p_step_locations) = self.gait.updateStepLocations(self.state,
 																self.step_locations,
 																self.p_step_locations,
@@ -120,8 +122,14 @@ class WooferRobot():
 		# Use forward kinematics from the robot body to compute where the woofer feet are
 		self.feet_locations = WooferDynamics.LegForwardKinematics(self.state['q'], self.state['j'])
 
-		if(self.i % 50 == 0):
-			self.torques = self.gait_planner.update(state, self.state['j'], self.feet_locations, self.t)
+		# only
+		if(self.i % (self.gait_planner.dt/self.dt) == 0):
+			mpc_torques = self.gait_planner.update(state, self.state['j'], self.feet_locations, self.t)
+
+		# Expanded version of active feet
+		active_feet_12 = self.active_feet[[0,0,0,1,1,1,2,2,2,3,3,3]]
+
+		self.torques = active_feet_12 * qp_torques + (1 - active_feet_12) * self.swing_torques
 
 		# Update our record of the maximum force/torque
 		# self.max_forces.Update(self.foot_forces)
@@ -190,6 +198,6 @@ def MakeWoofer(dt = 0.001):
 	gait_planner 		= MPCStandingPlanner(20, .05, gait, np.array([0, 0, (WOOFER_CONFIG.LEG_L + WOOFER_CONFIG.FOOT_RADIUS), 0, 0, 0, 0, 0, 0, 0, 0, 0]))
 	swing_controller	= PDSwingLegController()
 
-	woofer = WooferRobot(mujoco_state_est, mujoco_contact_est, gait_planner, swing_controller, dt = dt)
+	woofer = WooferRobot(mujoco_state_est, mujoco_contact_est, gait, gait_planner, swing_controller, dt = dt)
 
 	return woofer

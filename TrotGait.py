@@ -29,7 +29,7 @@ class TrotGait:
 		else:
 			return 4
 
-	def feetInContact(self, t):
+	def feetInContact(self, phase):
 		phase = self.getPhase(t)
 
 		if phase == 1:
@@ -42,13 +42,12 @@ class TrotGait:
 			return np.array([0, 1, 1, 0])
 
 	def updateStepLocations(self, state, step_locations, p_step_locations, phase):
-	"""
-	uses the heuristic in eq. 33 of the MIT Cheetah 3 MPC paper
-	to calculate the footstep locations
+		"""
+		uses the heuristic in eq. 33 of the MIT Cheetah 3 MPC paper
+		to calculate the footstep locations
 
-	side: right leg = 1, left leg = 0
-	"""
-
+		side: right leg = 1, left leg = 0
+		"""
 		p_diff = 0.5 * state['p_d'][0:2] * self.step_time
 
 		new_step_locations = step_locations
