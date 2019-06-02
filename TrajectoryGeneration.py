@@ -12,7 +12,7 @@ class TrajectoryGeneration:
 		insert stuff
 		"""
 		self.J = WOOFER_CONFIG.INERTIA
-		self.m = 7.172 # WOOFER_CONFIG.MASS 
+		self.m = 7.172 # WOOFER_CONFIG.MASS
 
 		self.C = np.zeros((1,13))
 		self.D = np.zeros((1,12))
@@ -77,10 +77,10 @@ class TrajectoryGeneration:
 		B[6:9, 6:9] = np.eye(3)/self.m
 		B[6:9, 9:12] = np.eye(3)/self.m
 
-		B[9:12, 0:3] = J_w_inv*R1
-		B[9:12, 3:6] = J_w_inv*R2
-		B[9:12, 6:9] = J_w_inv*R3
-		B[9:12, 9:12] = J_w_inv*R4
+		B[9:12, 0:3] = J_w_inv @ R1
+		B[9:12, 3:6] = J_w_inv @ R2
+		B[9:12, 6:9] = J_w_inv @ R3
+		B[9:12, 9:12] = J_w_inv @ R4
 
 		return B
 
