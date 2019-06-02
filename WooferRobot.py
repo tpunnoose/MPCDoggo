@@ -35,6 +35,7 @@ class WooferRobot():
 		self.state_estimator 	= state_estimator
 		self.gait_planner		= gait_planner
 		self.swing_controller 	= swing_controller
+		self.gait				= gait
 		self.state 				= None
 		self.contacts 			= None
 
@@ -95,6 +96,8 @@ class WooferRobot():
 		self.contacts 	= self.contact_estimator.update(sim)
 
 		self.phase = self.gait.getPhase(self.t)
+
+		self.step_phase = self.gait.getStepPhase(self.t)
 
 		self.active_feet = self.gait.feetInContact(self.phase)
 

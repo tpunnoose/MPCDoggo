@@ -72,3 +72,15 @@ class TrotGait:
 			new_p_step_locations[9:11] = p_step_locations[9:11] + p_diff
 
 		return (new_step_locations, new_p_step_locations)
+
+	def getStepPhase(self, t):
+		"""
+		returns step phase for swing leg controller
+		"""
+		phase_time = t % self.phase_length
+
+		if phase == 4:
+			time_into_traj = 2*self.step_time + 2*self.overlap_time - phase_time
+		else:
+			time_into_traj = self.step_time + self.overlap_time - phase_time
+		return time_into_traj/self.step_time
