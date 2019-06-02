@@ -73,7 +73,7 @@ class TrotGait:
 
 		return (new_step_locations, new_p_step_locations)
 
-	def getStepPhase(self, t):
+	def getStepPhase(self, t, phase):
 		"""
 		returns step phase for swing leg controller
 		"""

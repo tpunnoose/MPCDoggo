@@ -29,8 +29,8 @@ class WooferConfig:
 		self.INERTIA[2,2] = Iz
 
 		self.JOINT_NOISE 	= 0.5	# Nm, 1 sigma of gaussian noise
-		self.LATENCY 		= 2		# ms of sense->control latency
-		self.UPDATE_PERIOD	= 2		# ms between control updates
+		self.LATENCY 		= 0		# ms of sense->control latency
+		self.UPDATE_PERIOD	= 1		# ms between control updates
 
 class EnvironmentConfig:
 	def __init__(self):

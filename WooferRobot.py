@@ -76,6 +76,7 @@ class WooferRobot():
 
 		self.swing_torques = np.zeros(12)
 		self.swing_trajectory = np.zeros(12)
+		self.mpc_torques = np.zeros(12)
 
 	def step(self, sim):
 		"""
@@ -97,7 +98,7 @@ class WooferRobot():
 
 		self.phase = self.gait.getPhase(self.t)
 
-		self.step_phase = self.gait.getStepPhase(self.t)
+		self.step_phase = self.gait.getStepPhase(self.t, self.phase)
 
 		self.active_feet = self.gait.feetInContact(self.phase)
 
@@ -126,13 +127,14 @@ class WooferRobot():
 		self.feet_locations = WooferDynamics.LegForwardKinematics(self.state['q'], self.state['j'])
 
 		# only
+
 		if(self.i % (self.gait_planner.dt/self.dt) == 0):
-			mpc_torques = self.gait_planner.update(state, self.state['j'], self.feet_locations, self.t)
+			self.mpc_torques = self.gait_planner.update(state, self.state['j'], self.feet_locations, self.t)
 
 		# Expanded version of active feet
 		active_feet_12 = self.active_feet[[0,0,0,1,1,1,2,2,2,3,3,3]]
 
-		self.torques = active_feet_12 * qp_torques + (1 - active_feet_12) * self.swing_torques
+		self.torques = active_feet_12 * self.mpc_torques + (1 - active_feet_12) * self.swing_torques
 
 		# Update our record of the maximum force/torque
 		# self.max_forces.Update(self.foot_forces)
