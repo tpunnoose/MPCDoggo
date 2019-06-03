@@ -15,7 +15,7 @@ from StateEstimator 		import MuJoCoStateEstimator
 from ContactEstimator 		import MuJoCoContactEstimator
 from SwingLegController		import PDSwingLegController, ZeroSwingLegController
 from TrotGait 				import TrotGait
-from MPCPlanner				import MPCWalkingPlanner
+from MPCPlanner				import MPCWalkingPlanner, MPCOrientationPlanner
 
 from WooferConfig import WOOFER_CONFIG, QP_CONFIG, SWING_CONTROLLER_CONFIG, GAIT_PLANNER_CONFIG
 
@@ -127,7 +127,13 @@ class WooferRobot():
 
 		# only update the mpc trajectory at rate of planning discretization
 		if(self.i % (self.gait_planner.dt/self.dt) == 0):
-			self.mpc_torques = self.gait_planner.update(state, self.state['j'], self.feet_locations, self.t)
+			self.foot_hist = self.gait.constuctFutureFootHistory(self.t,
+																self.state,
+																self.feet_locations,
+																self.step_locations,
+																self.gait_planner.N,
+																self.gait_planner.dt)
+			self.mpc_torques = self.gait_planner.update(state, self.state['j'], self.foot_hist, self.t)
 
 		# Expanded version of active feet
 		active_feet_12 = self.active_feet[[0,0,0,1,1,1,2,2,2,3,3,3]]
@@ -195,8 +201,8 @@ def MakeWoofer(dt = 0.001):
 	"""
 	Create robot object
 	"""
-	trot_overlap_time = .01
-	trot_step_time = .1
+	trot_overlap_time = .05
+	trot_step_time = .3
 
 	MPC_horizon = 10
 	MPC_planning_timestep = 0.01
@@ -209,6 +215,8 @@ def MakeWoofer(dt = 0.001):
 	gait_planner 		= MPCWalkingPlanner(MPC_horizon, MPC_planning_timestep,
 											gait, np.array([0, 0, (WOOFER_CONFIG.LEG_L + WOOFER_CONFIG.FOOT_RADIUS), 0, 0, 0, 0, 0, 0, 0, 0, 0]),
 											MPC_desired_velocity)
+	# gait_planner 		= MPCOrientationPlanner(MPC_horizon, MPC_planning_timestep,
+	# 										gait, np.array([0, 0, (WOOFER_CONFIG.LEG_L + WOOFER_CONFIG.FOOT_RADIUS), 0, 0, 0, 0, 0, 0, 0, 0, 0]))
 	swing_controller	= PDSwingLegController()
 
 	woofer = WooferRobot(mujoco_state_est, mujoco_contact_est, gait, gait_planner, swing_controller, dt = dt)

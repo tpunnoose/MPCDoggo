@@ -12,7 +12,8 @@ class TrajectoryGeneration:
 		insert stuff
 		"""
 		self.J = WOOFER_CONFIG.INERTIA
-		self.m = 7.172 # WOOFER_CONFIG.MASS
+		self.m = WOOFER_CONFIG.MASS # 7.172
+		# self.m = 7.172
 
 		self.C = np.zeros((1,13))
 		self.D = np.zeros((1,12))
@@ -66,7 +67,7 @@ class TrajectoryGeneration:
 		B = np.zeros((13, 12))
 		Rz = self.rotZ(yaw)
 
-		J_w_inv = np.linalg.inv(Rz*self.J*Rz.T)
+		J_w_inv = np.linalg.inv(Rz @ self.J @ Rz.T)
 		R1 = CrossProductMatrix(foot_locations[0:3])
 		R2 = CrossProductMatrix(foot_locations[3:6])
 		R3 = CrossProductMatrix(foot_locations[6:9])
@@ -92,7 +93,7 @@ class TrajectoryGeneration:
 
 		return A_d, B_d
 
-	def solveSystem(self, refTrajectory, foot_locs, t):
+	def solveSystem(self, refTrajectory, foot_hist, t):
 		"""
 		build matrices and call solver
 
@@ -102,6 +103,9 @@ class TrajectoryGeneration:
 		assert(refTrajectory.shape[0] == self.N)
 		yaw_bar = np.mean(refTrajectory[:, 3])
 
+		# if t > 1.0:
+		# 	import pdb; pdb.set_trace()
+
 		A = self.constructA(yaw_bar)
 		A_hat = None
 		B_hats = np.zeros((self.N, 13, 12))
@@ -109,10 +113,10 @@ class TrajectoryGeneration:
 		curr_t = t
 
 		for i in range(self.N):
-			active_feet = self.gait.feetInContact(self.gait.getPhase(curr_t))
-			active_feet_12 = active_feet[[0,0,0,1,1,1,2,2,2,3,3,3]]
+			# active_feet = self.gait.feetInContact(self.gait.getPhase(curr_t))
+			# active_feet_12 = active_feet[[0,0,0,1,1,1,2,2,2,3,3,3]]
 
-			foot_loc_i = active_feet_12 * foot_locs
+			foot_loc_i = foot_hist[i,:]
 
 			B_i = self.constructB(foot_loc_i, refTrajectory[i, 3])
 
@@ -122,6 +126,8 @@ class TrajectoryGeneration:
 
 			curr_t += self.dt
 
+		# if t > 0.1:
+		# 	import pdb; pdb.set_trace()
 		C, c_up = self.makeConstraints(t)
 		prob, u = self.build_qp(refTrajectory, A_hat, B_hats, C, c_up)
 
@@ -175,6 +181,7 @@ class TrajectoryGeneration:
 		# n number of state variables
 		# k number of horizon state points
 		# m dimension of control input at each point
+
 		x_ref = x_ref.T
 		x_ref = np.concatenate((x_ref, -9.81*np.ones((1, self.N))))
 		n, k = x_ref.shape

@@ -35,7 +35,7 @@ class WooferConfig:
 class EnvironmentConfig:
 	def __init__(self):
 		self.MU 			= 1.5 	# coeff friction
-		self.SIM_STEPS 		= 1500 	# simulation steps to take
+		self.SIM_STEPS 		= 3500 	# simulation steps to take
 		self.DT 			= 0.001 # timestep [s]
 
 # Software stuff
@@ -48,7 +48,7 @@ class QPConfig:
 
 class SwingControllerConfig:
 	def __init__(self):
-		self.STEP_HEIGHT 	= 0.08 # [m]
+		self.STEP_HEIGHT 	= 0.1 # [m]
 		self.KP				= np.array([400,400,2000]) # [Nm/rad, Nm/rad, N/m]
 
 class GaitPlannerConfig:

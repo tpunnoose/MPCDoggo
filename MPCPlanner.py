@@ -18,7 +18,7 @@ class MPCWalkingPlanner(MPCPlanner):
 		self.desired_velocity = desired_velocity
 
 	def update(self, state, qpos_joints, foot_locations, t):
-		referenceTrajectory = self.generateReferenceTrajectory(state)
+		referenceTrajectory = self.generateReferenceTrajectory(state, t)
 
 		U_horizon = self.trajectoryGenerator.solveSystem(referenceTrajectory, foot_locations, t)
 
@@ -49,15 +49,70 @@ class MPCWalkingPlanner(MPCPlanner):
 
 		return joint_torques
 
-	def generateReferenceTrajectory(self, state):
+	def generateReferenceTrajectory(self, state, t):
 		scale = np.linspace(0, 1, self.N)[:, np.newaxis]
 		curr = np.tile(state[np.newaxis, :], (self.N, 1))
 		goal = np.zeros((self.N, 12))
-		goal[:, 6:9] = self.desired_velocity
-		ref = scale * goal + (1 - scale) * curr
-		ref_vel = ref[:, 6:].copy()
+		goal[:, 6:8] = self.desired_velocity[:2]
+
+		ref = np.zeros((self.N, 12))
+		# Interpolate x and y velocities to the desired velocity
+		ref[:, 6:8] = (1 - scale) * curr[:, 6:8] + scale * goal[:, 6:8]
+		# Calculate reference x and y positions by integration
+		ref_vel = ref[:, 6:8].copy()
 		ref_vel *= self.dt
-		dx = np.cumsum(ref_vel, axis=0)
-		ref[:, :3] = curr[:, :3] + dx[:, :3]
-		ref[:, 2:6] = (1 - scale) * curr[:, 2:6] + scale * self.init_state[2:6][np.newaxis, :]
+		dxy = np.cumsum(ref_vel, axis=0)
+		ref[:, :2] = curr[:, :2] + dxy
+		# Interpolate angle positions to 0
+		ref[:, 3:6] = (1 - scale) * curr[:, 3:6]
+		# Interpolate z position to initial state
+		ref[:, 2] = (1 - scale)[:, 0] * curr[:, 2] + scale[:, 0] * self.init_state[2]
+		# Set z, angle velocities to 0
+		# They are already 0
+		return ref
+
+class MPCOrientationPlanner(MPCWalkingPlanner):
+	def __init__(self, N, dt_plan, gait, init_state):
+		self.dt = dt_plan
+		self.N = N
+		self.gait = gait
+		self.trajectoryGenerator = TrajectoryGeneration(gait, dt_plan, N)
+		self.init_state = init_state
+
+	def generateReferenceTrajectory(self, state, t):
+		ROLL_CONSTANT = 0.0
+		PITCH_CONSTANT = 0.0
+		YAW_CONSTANT = 0.025
+		w = 2 * np.pi * 10
+
+		scale = np.linspace(0, 1, self.N)[:, np.newaxis]
+		curr = np.tile(state[np.newaxis, :], (self.N, 1))
+		goal = np.zeros((self.N, 12))
+
+		ref = np.zeros((self.N, 12))
+		# Interpolate x and y velocities to the desired velocity
+		ref[:, 6:8] = (1 - scale) * curr[:, 6:8] + scale * goal[:, 6:8]
+		# Calculate reference x and y positions by integration
+		ref_vel = ref[:, 6:8].copy()
+		ref_vel *= self.dt
+		dxy = np.cumsum(ref_vel, axis=0)
+		ref[:, :2] = curr[:, :2] + dxy
+		# Interpolate angle positions to 0
+		ref[:, 3:6] = (1 - scale) * curr[:, 3:6]
+		# Interpolate z position to initial state
+		ref[:, 2] = (1 - scale)[:, 0] * curr[:, 2] + scale[:, 0] * self.init_state[2]
+		# Set z, angle velocities to 0
+		# They are already 0
+
+		times = np.linspace(t, t + (self.N - 1) * self.dt, self.N)
+		ref[:, 3] = ROLL_CONSTANT * np.sin(w * times)
+		ref[:, 4] = PITCH_CONSTANT * np.sin(w * times)
+		ref[:, 5] = YAW_CONSTANT * np.sin(w * times)
+		ref[:, 9] = w * ROLL_CONSTANT * np.cos(w * times)
+		ref[:, 10] = w * PITCH_CONSTANT * np.cos(w * times)
+		ref[:, 11] = w * YAW_CONSTANT * np.cos(w * times)
+
+		# if t > 2.0:
+		# 	import pdb; pdb.set_trace()
+
 		return ref
