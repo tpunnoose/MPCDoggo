@@ -28,14 +28,14 @@ class WooferConfig:
 		self.INERTIA[1,1] = Iy
 		self.INERTIA[2,2] = Iz
 
-		self.JOINT_NOISE 	= 0#.5	# Nm, 1 sigma of gaussian noise
-		self.LATENCY 		= 0		# ms of sense->control latency
+		self.JOINT_NOISE 	= 0.5	# Nm, 1 sigma of gaussian noise
+		self.LATENCY 		= 2		# ms of sense->control latency
 		self.UPDATE_PERIOD	= 1		# ms between control updates
 
 class EnvironmentConfig:
 	def __init__(self):
 		self.MU 			= 1.5 	# coeff friction
-		self.SIM_STEPS 		= 10000 	# simulation steps to take
+		self.SIM_STEPS 		= 5000 	# simulation steps to take
 		self.DT 			= 0.001 # timestep [s]
 
 # Software stuff
