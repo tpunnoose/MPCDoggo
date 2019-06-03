@@ -17,6 +17,8 @@ class TrotGait:
 		self.step_time = step_time
 		self.overlap_time = overlap_time
 
+		self.isFirstStep = 1
+
 		self.phase_length = 2*step_time + 2*overlap_time
 
 	def getPhase(self, t):
@@ -50,9 +52,16 @@ class TrotGait:
 
 		side: right leg = 1, left leg = 0
 		"""
-		# p_diff = 0.5 * state['p_d'][0:2] * self.step_time
+		p_diff = 2.5 * state['p_d'][0:2] * self.step_time
 
-		p_diff = np.array([0.2, 0.0])
+		print(p_diff)
+
+		# if self.isFirstStep:
+		# 	p_diff = np.array([0.15, 0.0])
+		# 	if phase == 2:
+		# 		self.isFirstStep = 0
+		# else:
+		# 	p_diff = np.array([0.315, 0.0])
 
 		# p_diff = np.zeros(2)
 
@@ -63,15 +72,15 @@ class TrotGait:
 			# need to move the FL/BR feet
 			new_step_locations[3:5] = p_step_locations[3:5] + p_diff
 			new_step_locations[6:8] = p_step_locations[6:8] + p_diff
-			new_p_step_locations[0:2] = p_step_locations[0:2]
-			new_p_step_locations[9:11] = p_step_locations[9:11]
+			new_p_step_locations[0:2] = step_locations[0:2]
+			new_p_step_locations[9:11] = step_locations[9:11]
 
 		elif phase == 3:
 			# need to move the FR/BL feet
 			new_step_locations[0:2] = p_step_locations[0:2] + p_diff
 			new_step_locations[9:11] = p_step_locations[9:11] + p_diff
-			new_p_step_locations[3:5] = p_step_locations[3:5]
-			new_p_step_locations[6:8] = p_step_locations[6:8]
+			new_p_step_locations[3:5] = step_locations[3:5]
+			new_p_step_locations[6:8] = step_locations[6:8]
 
 		return (new_step_locations, new_p_step_locations)
 

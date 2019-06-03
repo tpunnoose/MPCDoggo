@@ -109,6 +109,7 @@ class WooferRobot():
 																self.step_locations,
 																self.p_step_locations,
 																self.phase)
+
 		# ################################### Swing leg control ###################################
 		self.swing_torques, \
 		self.swing_forces,\
@@ -201,13 +202,13 @@ def MakeWoofer(dt = 0.001):
 	"""
 	Create robot object
 	"""
-	trot_overlap_time = .05
+	trot_overlap_time = .105
 	trot_step_time = .3
 
-	MPC_horizon = 10
+	MPC_horizon = 16
 	MPC_planning_timestep = 0.01
 
-	MPC_desired_velocity = np.array([0.3, 0.0, 0.0])
+	MPC_desired_velocity = np.array([0.305, 0.0, 0.0])
 
 	mujoco_state_est 	= MuJoCoStateEstimator()
 	mujoco_contact_est 	= MuJoCoContactEstimator()
