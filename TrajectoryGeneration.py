@@ -13,7 +13,7 @@ class TrajectoryGeneration:
 		"""
 		self.J = WOOFER_CONFIG.INERTIA
 		self.m = WOOFER_CONFIG.MASS # 7.172
-		# self.m = 7.9
+		# self.m = 7.172
 
 		self.C = np.zeros((1,13))
 		self.D = np.zeros((1,12))
@@ -27,7 +27,25 @@ class TrajectoryGeneration:
 		self.dt = dt
 
 		self.Q = np.eye(13)
-		self.alpha = 0
+
+		# tuning params
+
+		self.Q[0,0] = 1
+		self.Q[1,1] = 1
+
+		# z position
+		# self.Q[2,2] = 100
+
+		# roll
+		# self.Q[3,3] = 4
+
+		# pitch
+		# self.Q[3,3] = 10
+
+		# yaw =
+		# self.Q[5,5] = 100
+
+		self.alpha = 1e-6
 		self.R = self.alpha*np.eye(12)
 
 		self.mu = 1.5
@@ -138,6 +156,8 @@ class TrajectoryGeneration:
 	def makeConstraints(self, t):
 		"""
 		create constraint matrix C and lower and upper bounds
+
+		need to check these
 		"""
 		curr_t = t
 

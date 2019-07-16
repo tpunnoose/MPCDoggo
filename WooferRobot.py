@@ -15,6 +15,8 @@ from StateEstimator 		import MuJoCoStateEstimator
 from ContactEstimator 		import MuJoCoContactEstimator
 from SwingLegController		import PDSwingLegController, ZeroSwingLegController
 from TrotGait 				import TrotGait
+from StandingGait 			import StandingGait
+from BoundGait				import BoundGait
 from MPCPlanner				import MPCWalkingPlanner, MPCOrientationPlanner
 
 from WooferConfig import WOOFER_CONFIG, QP_CONFIG, SWING_CONTROLLER_CONFIG, GAIT_PLANNER_CONFIG
@@ -134,7 +136,15 @@ class WooferRobot():
 																self.step_locations,
 																self.gait_planner.N,
 																self.gait_planner.dt)
-			self.mpc_torques = self.gait_planner.update(state, self.state['j'], self.foot_hist, self.t)
+			self.foot_forces = self.gait_planner.update(state, self.state['j'], self.foot_hist, self.t)
+
+		# update the torques via jacobian at different rate
+		if(self.i % (self.gait_planner.dt_torque/self.dt) == 0):
+			for i in range(4):
+				# import pdb; pdb.set_trace()
+				f_i = -self.foot_forces[(3*i):(3*i+3)][np.newaxis].T
+				self.mpc_torques[(3*i):(3*i+3)] = WooferDynamics.FootForceToJointTorques(f_i, self.state['j'][(3*i):(3*i+3)], self.state['q'], 0)[:,0]
+
 
 		# Expanded version of active feet
 		active_feet_12 = self.active_feet[[0,0,0,1,1,1,2,2,2,3,3,3]]
@@ -205,15 +215,27 @@ def MakeWoofer(dt = 0.001):
 	trot_overlap_time = .105
 	trot_step_time = .3
 
+	bound_step_time = 0.05
+	bound_flight_time = 0.01
+
 	MPC_horizon = 16
 	MPC_planning_timestep = 0.01
+	MPC_torque_timestep = 0.001
 
-	MPC_desired_velocity = np.array([0.305, 0.0, 0.0])
+	# Trot:
+	# MPC_desired_velocity = np.array([0.305, 0.0, 0.0])
+
+	MPC_desired_velocity = np.array([0.3, 0, 0.0])
+
+	# Bound
+	# MPC_desired_velocity = np.array([0.0, 0.0, 0.0])
 
 	mujoco_state_est 	= MuJoCoStateEstimator()
 	mujoco_contact_est 	= MuJoCoContactEstimator()
+	# gait 				= BoundGait(bound_step_time, bound_flight_time)
 	gait 				= TrotGait(trot_step_time, trot_overlap_time)
-	gait_planner 		= MPCWalkingPlanner(MPC_horizon, MPC_planning_timestep,
+	# gait				= StandingGait()
+	gait_planner 		= MPCWalkingPlanner(MPC_horizon, MPC_planning_timestep, MPC_torque_timestep,
 											gait, np.array([0, 0, (WOOFER_CONFIG.LEG_L + WOOFER_CONFIG.FOOT_RADIUS), 0, 0, 0, 0, 0, 0, 0, 0, 0]),
 											MPC_desired_velocity)
 	# gait_planner 		= MPCOrientationPlanner(MPC_horizon, MPC_planning_timestep,
